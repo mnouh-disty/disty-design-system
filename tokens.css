@@ -88,6 +88,14 @@
   --dur-base:            200ms;  /* Most transitions */
   --dur-slow:            350ms;  /* Accordions, panels */
 
+  /* ─── ANIMATION — BLUR WORD REVEAL ──────────────────────── */
+  /* Applies to h1, h2, h3 ONLY. Body text is always static.  */
+  --anim-blur-duration:  1200ms;
+  --anim-blur-stagger:   80ms;
+  --anim-blur-amount:    8px;
+  --anim-blur-easing:    cubic-bezier(0.16, 1, 0.3, 1);
+  --anim-blur-threshold: 0.2;
+
 }
 
 /*
