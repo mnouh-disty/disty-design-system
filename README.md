@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/29406539/README.md)
 # Disty Design System
 
 A production-ready design system for Disty's marketing website. Built with HeroUI conventions, TT Commons Pro, and a custom purple palette.
@@ -193,3 +194,94 @@ module.exports = {
 - Primary CTA hover: `#7B6DE8`
 - Never use pure grey — always use the purple-tinted grey scale
 - Heading letter spacing: `-0.02em`
+
+---
+
+## Animation
+
+### Blur word reveal
+
+Applied **only to h1, h2, h3**. Body text, subheadings, and all other elements are always static.
+
+| Token | Value | Description |
+|---|---|---|
+| `--anim-blur-duration` | `1200ms` | How long each word takes to come into focus |
+| `--anim-blur-stagger` | `80ms` | Delay between each word |
+| `--anim-blur-amount` | `8px` | Starting blur, dissolves to 0px |
+| `--anim-blur-easing` | `cubic-bezier(0.16, 1, 0.3, 1)` | Silky smooth ease-out |
+| `--anim-blur-threshold` | `0.2` | 20% of element in viewport triggers it |
+
+**Behavior:** On scroll into view, each word in the heading fades from blurry (`8px`) to sharp (`0px`), word by word with an 80ms stagger. Fires once — does not repeat on scroll out/in. No slide or movement — blur only.
+
+**Never apply to:** body text, captions, nav links, buttons, badges, or any UI element other than h1/h2/h3.
+
+### JS implementation (vanilla)
+
+```js
+(function () {
+  const DURATION = 1200;
+  const STAGGER  = 80;
+  const BLUR     = 8;
+  const EASING   = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+  function wrapWords(el) {
+    const words = el.innerText.split(' ');
+    el.innerHTML = words.map((w, i) =>
+      `<span style="display:inline-block;overflow:hidden;vertical-align:bottom;">` +
+      `<span data-index="${i}" style="display:inline-block;opacity:0;filter:blur(${BLUR}px);
+        transition:opacity ${DURATION}ms ${EASING},filter ${DURATION}ms ${EASING};">${w}</span>` +
+      `</span>${i < words.length - 1 ? ' ' : ''}`
+    ).join('');
+  }
+
+  function revealEl(el) {
+    el.querySelectorAll('[data-index]').forEach(w => {
+      setTimeout(() => {
+        w.style.opacity = '1';
+        w.style.filter  = 'blur(0px)';
+      }, parseInt(w.dataset.index) * STAGGER);
+    });
+  }
+
+  document.querySelectorAll('h1, h2, h3').forEach(el => {
+    wrapWords(el);
+    new IntersectionObserver((entries, obs) => {
+      if (entries[0].isIntersecting) { revealEl(el); obs.unobserve(el); }
+    }, { threshold: 0.2 }).observe(el);
+  });
+})();
+```
+
+### Framer Motion (React / HeroUI)
+
+```jsx
+import { motion } from 'framer-motion'
+
+function BlurHeading({ children, as: Tag = 'h2' }) {
+  const words = children.split(' ')
+  return (
+    <Tag>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          style={{ display: 'inline-block', marginRight: '0.25em' }}
+          initial={{ opacity: 0, filter: 'blur(8px)' }}
+          whileInView={{ opacity: 1, filter: 'blur(0px)' }}
+          transition={{
+            duration: 1.2,
+            delay: i * 0.08,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </Tag>
+  )
+}
+
+// Usage
+<BlurHeading as="h1">Build something that lasts.</BlurHeading>
+<BlurHeading as="h2">Design with intention.</BlurHeading>
+```
